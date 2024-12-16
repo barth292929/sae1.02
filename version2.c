@@ -260,7 +260,7 @@ char trajOpti(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direc
 	char TP_BAS, TP_DROITE, TP_GAUCHE, TP_HAUT;
 
 	// calcul de la distance serpent->pomme
-	Distance_pomme = (abs(lesX[0]-lesPommesX[nb_pomme]) + abs(lesY[0]-lesPommesY[nb_pomme]));
+	Distance_pomme = (abs(lesX[0]-lesPommesX[nb_pomme]) + abs(lesY[0]-lesPommesY[nb_pomme])); //abs pour absolute
 
 	//calcul de la distance serpent->pomme en prenant le portail de gauche
 	Distance_gauche = ((abs(lesX[0] -1) + abs(lesY[0]- HAUTEUR_PLATEAU/2))+(abs(lesPommesX[nb_pomme] -1)+abs(lesPommesY[nb_pomme]- HAUTEUR_PLATEAU/2)));
