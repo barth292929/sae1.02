@@ -222,7 +222,7 @@ void dessinerSerpent(int lesX[], int lesY[]){
 	afficher(lesX[0], lesY[0],TETE);
 }
 
-char calcTraj(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direction){
+/**char calcTraj(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direction){
 	char newDir;
 	if (lesX[0] < lesPommesX[nb_pomme] && direction!=GAUCHE){  //si la pomme est plus à droite que le serpent, il va vers la droite
 		newDir = DROITE;
@@ -242,6 +242,7 @@ char calcTraj(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direc
 	}
 return newDir;
 }
+**/
 
 bool crash(int lesX[], int lesY[]){ //vérifie si il y a une collision avec le corps du serpent
 	int i=0;
@@ -255,7 +256,7 @@ bool crash(int lesX[], int lesY[]){ //vérifie si il y a une collision avec le c
 	return ok;
 }
 
-char trajOpti(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direction){
+/**char trajOpti(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direction){
 	int Distance_pomme, Distance_gauche, Distance_droite, Distance_haut, Distance_bas;
 	char TP_BAS, TP_DROITE, TP_GAUCHE, TP_HAUT;
 
@@ -297,6 +298,7 @@ char trajOpti(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direc
 	}
 	return direction;
 }
+**/
 
 void progresser(int lesX[], int lesY[], char direction, tPlateau plateau, bool * collision, bool * pomme){
 	// efface le dernier élément avant d'actualiser la position de tous les 
