@@ -229,13 +229,15 @@ void dessinerSerpent(int lesX[], int lesY[]){
 
 char calcTraj(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direction){
     char newDir;
-    if (lesX[0] < lesPommesX[nb_pomme] && direction != GAUCHE) {
+	int objectif_X, objectif_Y ;
+    if (lesX[0] < objectif_X) {
         newDir = DROITE;
-    } else if (lesX[0] > lesPommesX[nb_pomme] && direction != DROITE) {
+    } else if (lesX[0] > objectif_X) {
         newDir = GAUCHE;
-    } else if (lesY[0] > lesPommesY[nb_pomme] && direction != BAS) {
+    }
+	if (lesY[0] > objectif_Y) {
         newDir = HAUT;
-    } else {
+    } else if (lesY[0] < objectif_Y) {
         newDir = BAS;
     }
     return newDir;
@@ -256,11 +258,6 @@ bool crash(int x, int y, int lesX[], int lesY[]){ //vérifie si il y a une colli
 
 char trajOpti(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direction){
 	int Distance_pomme, Distance_gauche, Distance_droite, Distance_haut, Distance_bas;
-	char TP_BAS, TP_DROITE, TP_GAUCHE, TP_HAUT;
-	TP_BAS = plateau[LARGEUR_PLATEAU/2][HAUTEUR_PLATEAU] ;
-	TP_HAUT = plateau[LARGEUR_PLATEAU / 2][1] ;
-	TP_DROITE = plateau[LARGEUR_PLATEAU][HAUTEUR_PLATEAU / 2] ;
-	TP_GAUCHE = plateau[1][HAUTEUR_PLATEAU / 2] ;
 
 
 	// calcul de la distance serpent->pomme
@@ -277,29 +274,8 @@ char trajOpti(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direc
 
 	//calcul de la distance serpent->pomme en prenant le portail du bas
 	Distance_bas = ((abs(lesX[0]- LARGEUR_PLATEAU/2) + abs(lesY[0]- HAUTEUR_PLATEAU))+(abs(lesPommesX[nb_pomme]- LARGEUR_PLATEAU/2)+abs(lesPommesY[nb_pomme] -HAUTEUR_PLATEAU)));
+	
 
-	if (Distance_pomme<=Distance_gauche && Distance_pomme<=Distance_droite && Distance_pomme<=Distance_haut && Distance_pomme<=Distance_bas)
-	{
-		return direction;
-	}
-	else{
-		if (Distance_pomme<=Distance_gauche && Distance_pomme>=Distance_droite && Distance_pomme<=Distance_haut && Distance_pomme<=Distance_bas){
-			return TP_DROITE;
-		}
-		
-		else if (Distance_pomme>=Distance_gauche && Distance_pomme<=Distance_droite && Distance_pomme<=Distance_haut && Distance_pomme<=Distance_bas){
-			return TP_GAUCHE;
-		}
-
-		else if (Distance_pomme<=Distance_gauche && Distance_pomme<=Distance_droite && Distance_pomme>=Distance_haut && Distance_pomme<=Distance_bas){
-			return TP_HAUT;
-		}
-
-		else if (Distance_pomme<=Distance_gauche && Distance_pomme<=Distance_droite && Distance_pomme<=Distance_haut && Distance_pomme>=Distance_bas){
-			return TP_BAS;
-		}		
-	}
-	return direction;
 }
 
 
