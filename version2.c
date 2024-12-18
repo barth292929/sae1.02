@@ -4,7 +4,7 @@
 *
 * \author HAMON Gabriel, GOUJON Barthélemy
 *
-* \version 1
+* \version 2
 *
 * \date 6 Décembre 2024
 *
@@ -33,7 +33,7 @@
 // nombre de pommes à manger pour gagner
 #define NB_POMMES 10
 // temporisation entre deux déplacements du serpent (en microsecondes)
-#define ATTENTE 100000
+#define ATTENTE 90000
 // caractères pour représenter le serpent
 #define CORPS 'X'
 #define TETE 'O'
@@ -68,14 +68,14 @@ void effacer(int x, int y);
 void dessinerSerpent(int lesX[], int lesY[]);
 void progresser(int lesX[], int lesY[], char direction, tPlateau plateau, bool * collision, bool * pomme);
 void calcTraj(tPlateau plateau, int lesX[], int lesY[], char *direction, int objectif_x, int objectif_y);
-bool crash(int x, int y, int lesX[], int lesY[]);
+bool crash(int lesX[], int lesY[]);
 void trajOpti(int lesX[], int lesY[], int nb_pomme, char direction, int *objectif_x, int *objectif_y);
-void CalculPosProchaine(int *pos_prochaine_x, int *pos_prochaine_y, int les_x[], int les_y[], char direction);
-int Modulo(int x,int N) ;
+void prochaine_position(int lesX[], int lesY[], int *prochaine_position_x, int *prochaine_position_y, char direction) ;
 void gotoxy(int x, int y);
 int  kbhit();
 void disable_echo();
 void enable_echo();
+int Modulo(int x,int N);
 
 int lesPommesX[NB_POMMES] = {75, 75, 78, 2, 8, 78, 74, 2, 72, 5};
 int lesPommesY[NB_POMMES] = { 8, 39, 2, 2, 5, 39, 33, 38, 35, 2};
@@ -118,9 +118,6 @@ int main(){
 		lesY[i] = Y_INITIAL;
 	}
 
-	int x = 0 ;
-	int y = 0 ;
-
 	// mise en place du plateau
 	initPlateau(lePlateau);
 	system("clear");
@@ -132,7 +129,7 @@ int main(){
 	dessinerSerpent(lesX, lesY);
 	disable_echo();
 	direction = DROITE;
-	collision = crash(x, y, lesX, lesY) ;
+	collision = crash(lesX, lesY) ;
 
 	// boucle de jeu. Arret si touche STOP, si collision avec une bordure ou
 	// si toutes les pommes sont mangées
@@ -141,23 +138,27 @@ int main(){
 	{
 		calcTraj(lePlateau, lesX, lesY, &direction, objectif_x, objectif_y); 
 		progresser(lesX, lesY, direction, lePlateau, &collision, &pommeMangee);
-		nbMove++;
+		nbMove++; //compteur de mouvements
 
 		if (pommeMangee){
-            nbPommes++;
+            nbPommes++; //augmente le nombre de pommes mangées
 			gagne = (nbPommes==NB_POMMES);
 			if (!gagne){
-				ajouterPomme(lePlateau, nbPommes);
-			}
+				ajouterPomme(lePlateau, nbPommes); //ajoute une pomme sur le plateau suite à la pomme mangée
+			}	
 		}
 
-		if (lesX[0] == objectif_x && lesY[0] == objectif_y) {
-			if (!pommeMangee) { 
+		if (lesX[0] == objectif_x && lesY[0] == objectif_y) { //lorsque l'objectif est atteint
+			if (!pommeMangee) { 							 // et que l'objectif n'est pas une pomme
 				progresser(lesX, lesY, direction, lePlateau, &collision, &pommeMangee);
+				progresser(lesX, lesY, direction, lePlateau, &collision, &pommeMangee); //on progresse de 2 car le portail est situé au niveau de bordure
+				nbMove += 2;
 			}
-			trajOpti(lesX, lesY, nbPommes, direction, &objectif_x, &objectif_y) ;
+			trajOpti(lesX, lesY, nbPommes, direction, &objectif_x, &objectif_y) ; //calcul les coordonnées du nouvel objectif
 		}
-		pommeMangee = false ; 
+
+		pommeMangee = false;
+
 
 		if (!gagne){
 			if (!collision){
@@ -246,41 +247,91 @@ void dessinerSerpent(int lesX[], int lesY[]){
 
 
 void calcTraj(tPlateau plateau, int lesX[], int lesY[], char *direction, int objectif_x, int objectif_y){
+	if (lesX[0] < objectif_x) {
+		*direction = DROITE ; //emmène le serpent vers la droite
+	}else if (lesX[0] > objectif_x) {
+		*direction = GAUCHE ;//emmène le serpent vers la gauche
+	}
+	if (lesY[0] < objectif_y) {
+		*direction = BAS ;//emmène le serpent vers le bas
+	} else if (lesY[0] > objectif_y) {
+		*direction = HAUT ;//emmène le serpent vers le haut
+	}
 
+	/*Nous n'avons pas réussi à finir les collisions dans les temps, on a donc préféré vous rendre sans les collisions*/
+
+	/*int prochaine_position_x, prochaine_position_y ;
+	bool collision ; 
+	char classement[NB_DIRECTIONS] ;
+	int i ;
+
+	collision = false ;
+	i = 0 ;
 	// axe X
-    if (lesX[0] < objectif_x && *direction!=GAUCHE) {
-        *direction = DROITE; //la direction devient droite
+    if (lesX[0] < objectif_x) {
+        classement[i++] = DROITE; //la direction prioritaire devient droite
     } 
 	
-	else if (lesX[0] > objectif_x && *direction!= DROITE) {
-        *direction = GAUCHE; //la direction devient gauche
+	else if (lesX[0] > objectif_x) {
+        classement[i++] = GAUCHE; //la direction prioritaire devient gauche
     }
 
 	// axe Y
-	if (lesY[0] > objectif_y && *direction != BAS) {
-        *direction = HAUT; //la direction devient haut
+	if (lesY[0] > objectif_y) {
+        classement[i++] = HAUT; //la direction prioritaire devient haut
     } 
-	else if (lesY[0] < objectif_y && *direction != HAUT) {
-        *direction = BAS; //la direction devient bas
-    } 
+	else if (lesY[0] < objectif_y) {
+        classement[i++] = BAS; //la direction prioritaire devient bas
+    }
+
+	if (i < NB_DIRECTIONS){
+		if (lesX[0] >= objectif_x)
+		{
+			classement[i++]= DROITE;
+		}
+		if (lesX[0] <= objectif_x)
+		{
+			classement[i++]= GAUCHE;
+		}
+		if (lesY[0] <= objectif_y)
+		{
+			classement[i++]= HAUT;
+		}
+		if (lesY[0] >= objectif_y)
+		{
+			classement[i++]= BAS;
+		}
+	}
+
+	i = 0 ;
+
+	do
+	{
+		prochaine_position(lesX, lesY, &prochaine_position_x, &prochaine_position_y, classement[i]) ;
+		collision = crash(lesX, lesY) ;
+	} while (collision && i++ < NB_DIRECTIONS); //recherche pour la position suivante si une collision et si une autre direction est possible dans notre classement
+	
+	
+	
+	*direction = classement[i];*/
 }
 
 
 
+bool crash(int lesX[], int lesY[]){ //vérifie si il y a une collision avec le corps du serpent
 
-bool crash(int x, int y, int lesX[], int lesY[]){ //vérifie si il y a une collision avec le corps du serpent
 	int i ;
 	bool ok = false;
 	for (i=1 ; i<TAILLE ; i++) {
-		if (lesX[i] == x && lesY[i] == y) {
+		if (lesX[i] == lesX[0] && lesY[i] == lesY[0]) {
 			ok = true ;
 		}
 	}
+	
 	return ok;
 }
 
 void trajOpti(int lesX[], int lesY[], int nb_pomme, char direction, int *objectif_x, int *objectif_y){
-
 	int Distance_pomme, distance_min;
 	int sortie_oppose, sortie, sortie_min ;
 	int distance ;
@@ -293,28 +344,55 @@ void trajOpti(int lesX[], int lesY[], int nb_pomme, char direction, int *objecti
 	distance_min = Distance_pomme ;
 
 	for (sortie = 0 ; sortie < NB_DIRECTIONS ; sortie++) {
-		sortie_oppose = (sortie + NB_DIRECTIONS / 2) % NB_DIRECTIONS ; //pour trouver l'opposé en deux
+		sortie_oppose = (sortie + (NB_DIRECTIONS / 2)) % NB_DIRECTIONS ; //pour trouver l'opposé en deux
 		distance = (abs(lesX[0] - portail_X[sortie]) + 
 					abs(lesY[0] - portail_Y[sortie]) + 
 					abs(lesPommesX[nb_pomme] - portail_X[sortie_oppose]) + 
 					abs(lesPommesY[nb_pomme] - portail_Y[sortie_oppose])
 					) ;
-		if (distance_min > distance) {
+					//cela calcul la distance serpent -> portail + portail -> pomme
+
+		if (distance_min > distance) { //cherche la distance minimale
 			distance_min = distance ;
 			sortie_min = sortie ;
 		}
 	}
 
-	if (sortie_min == -1) {
+	if (sortie_min == -1) { //si le chemin le plus court est vers la pomme
 		*objectif_x = lesPommesX[nb_pomme] ;
 		*objectif_y = lesPommesY[nb_pomme] ;
-	} else {
+	} else { //si le chemin le plus court est vers le portail
 		*objectif_x = portail_X[sortie_min] ;
 		*objectif_y = portail_Y[sortie_min] ;
 	}
 
 }
 
+void prochaine_position(int lesX[], int lesY[], int *prochaine_position_x, int *prochaine_position_y, char direction) {
+	switch (direction)
+	{
+	case HAUT:
+		*prochaine_position_x = lesX[0] ;
+		*prochaine_position_y = lesY[0] - 1 ;
+		break;
+	
+	case BAS:
+		*prochaine_position_x = lesX[0] ;
+		*prochaine_position_y = lesY[0] + 1 ;	
+		break;
+	
+	case GAUCHE:
+		*prochaine_position_x = lesX[0] -1;
+		*prochaine_position_y = lesY[0] ;
+		break;
+
+	case DROITE:
+		*prochaine_position_x = lesX[0] + 1;
+		*prochaine_position_y = lesY[0] ;
+
+		break;
+	}
+}
 
 void progresser(int lesX[], int lesY[], char direction, tPlateau plateau, bool * collision, bool * pomme){
 	// efface le dernier élément avant d'actualiser la position de tous les 
@@ -341,6 +419,10 @@ void progresser(int lesX[], int lesY[], char direction, tPlateau plateau, bool *
 			lesX[0] = lesX[0] - 1;
 			break;
 	}
+
+    lesX[0] = Modulo(lesX[0]-1, LARGEUR_PLATEAU) +1;
+    lesY[0] = Modulo(lesY[0]-1, HAUTEUR_PLATEAU) +1;
+
 	*pomme = false;
 	// détection d'une "collision" avec une pomme
 	if (plateau[lesX[0]][lesY[0]] == POMME){
@@ -353,22 +435,6 @@ void progresser(int lesX[], int lesY[], char direction, tPlateau plateau, bool *
 		*collision = true;
 	}
 
-	if (lesY[0] == 1 && lesX[0] == LARGEUR_PLATEAU / 2)
-    {
-        lesY[0] = HAUTEUR_PLATEAU - 2;
-    }
-    else if (lesY[0] == HAUTEUR_PLATEAU - 1 && lesX[0] == LARGEUR_PLATEAU / 2)
-    {
-        lesY[0] = 2;
-    }
-    else if (lesX[0] == 1 && lesY[0] == HAUTEUR_PLATEAU / 2)
-    {
-        lesX[0] = LARGEUR_PLATEAU - 2;
-    }
-    else if (lesX[0] == LARGEUR_PLATEAU - 1 && lesY[0] == HAUTEUR_PLATEAU / 2)
-    {
-        lesX[0] = 2; 
-    }
    	dessinerSerpent(lesX, lesY);
 }
 
@@ -449,4 +515,8 @@ void enable_echo() {
         perror("tcsetattr");
         exit(EXIT_FAILURE);
     }
+}
+
+int Modulo(int x,int N){
+    return (x % N + N) %N;
 }
