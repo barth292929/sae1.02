@@ -67,7 +67,7 @@ void afficher(int, int, char);
 void effacer(int x, int y);
 void dessinerSerpent(int lesX[], int lesY[]);
 void progresser(int lesX[], int lesY[], char direction, tPlateau plateau, bool * collision, bool * pomme);
-char calcTraj(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direction);
+void calcTraj(tPlateau plateau, int lesX[], int lesY[], char *direction, int objectif_x, int objectif_y);
 bool crash(int x, int y, int lesX[], int lesY[]);
 void trajOpti(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direction, int *objectif_x, int *objectif_y);
 void gotoxy(int x, int y);
@@ -131,22 +131,30 @@ int main(){
 	disable_echo();
 	direction = DROITE;
 	collision = crash(x, y, lesX, lesY) ;
-	trajOpti(lePlateau, lesX, lesY, nbPommes, direction, &objectif_x, &objectif_y) ;
 
 	// boucle de jeu. Arret si touche STOP, si collision avec une bordure ou
 	// si toutes les pommes sont mangées
+	trajOpti(lePlateau, lesX, lesY, nbPommes, direction, &objectif_x, &objectif_y) ;
 	do 
 	{
-		direction = calcTraj(lePlateau, lesX, lesY, nbPommes, direction); 
+		calcTraj(lePlateau, lesX, lesY, &direction, objectif_x, objectif_y); 
 		progresser(lesX, lesY, direction, lePlateau, &collision, &pommeMangee);
 		nbMove++;
 		if (pommeMangee){
             nbPommes++;
 			gagne = (nbPommes==NB_POMMES);
+
 			if (!gagne){
 				ajouterPomme(lePlateau, nbPommes);
 				pommeMangee = false;
 			}	
+			
+			if (lesX[0] == objectif_x && lesY[0] == objectif_y) {
+				if (!pommeMangee) { 
+					progresser(lesX, lesY, direction, lePlateau, &collision, &pommeMangee);
+				}
+				trajOpti(lePlateau, lesX, lesY, nbPommes, direction, &objectif_x, &objectif_y) ;
+			}
 			
 		}
 		if (!gagne){
@@ -234,20 +242,17 @@ void dessinerSerpent(int lesX[], int lesY[]){
 	afficher(lesX[0], lesY[0],TETE);
 }
 
-char calcTraj(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direction){
-    char newDir;
-	int objectif_X, objectif_Y ;
-    if (lesX[0] < objectif_X) {
-        newDir = DROITE;
-    } else if (lesX[0] > objectif_X) {
-        newDir = GAUCHE;
+void calcTraj(tPlateau plateau, int lesX[], int lesY[], char *direction, int objectif_x, int objectif_y){
+    if (lesX[0] < objectif_x) {
+        *direction = DROITE;
+    } else if (lesX[0] > objectif_x) {
+        *direction = GAUCHE;
     }
-	if (lesY[0] > objectif_Y) {
-        newDir = HAUT;
-    } else if (lesY[0] < objectif_Y) {
-        newDir = BAS;
+	if (lesY[0] > objectif_y) {
+        *direction = HAUT;
+    } else if (lesY[0] < objectif_y) {
+        *direction = BAS;
     }
-    return newDir;
 
 }
 
@@ -265,7 +270,7 @@ bool crash(int x, int y, int lesX[], int lesY[]){ //vérifie si il y a une colli
 }
 
 void trajOpti(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direction, int *objectif_x, int *objectif_y){
-	int Distance_pomme, Distance_gauche, Distance_droite, Distance_haut, Distance_bas, distance_min;
+	int Distance_pomme, distance_min;
 	int sortie_oppose, sortie, sortie_min ;
 	int distance ;
 
