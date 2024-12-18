@@ -4,12 +4,13 @@
 *
 * \author HAMON Gabriel, GOUJON Barthélemy
 *
-* \version 1
+* \version 2
 *
-* \date 6 Décembre 2024
+* \date 18 Décembre 2024
 *
-* Ce programme est la 1ere version du jeu snake codé en C 
-* dans le terminal et automatisé
+* Ce programme est la 2eme version du jeu snake codé en C 
+* dans le terminal et automatisé, avec collisions et
+* portails entre les bordures
 *
 */
 
@@ -33,7 +34,7 @@
 // nombre de pommes à manger pour gagner
 #define NB_POMMES 10
 // temporisation entre deux déplacements du serpent (en microsecondes)
-#define ATTENTE 100000
+#define ATTENTE 70000
 // caractères pour représenter le serpent
 #define CORPS 'X'
 #define TETE 'O'
@@ -70,6 +71,7 @@ void progresser(int lesX[], int lesY[], char direction, tPlateau plateau, bool *
 void calcTraj(tPlateau plateau, int lesX[], int lesY[], char *direction, int objectif_x, int objectif_y);
 bool crash(int x, int y, int lesX[], int lesY[]);
 void trajOpti(int lesX[], int lesY[], int nb_pomme, char direction, int *objectif_x, int *objectif_y);
+void nextPos(int lesX[],int lesY[], char direction);
 void gotoxy(int x, int y);
 int  kbhit();
 void disable_echo();
@@ -153,10 +155,12 @@ int main(){
 				if (!pommeMangee) { 
 					progresser(lesX, lesY, direction, lePlateau, &collision, &pommeMangee);
 				}
-				trajOpti(lesX, lesY, nbPommes, direction, &objectif_x, &objectif_y) ;
+				trajOpti(lesX, lesY, nbPommes, direction, &objectif_x, &objectif_y);
+				gotoxy(90, 10);
+				printf("objectif du serpent: %d, %d", objectif_x, objectif_y);
 			}
-			
 		}
+
 		if (!gagne){
 			if (!collision){
 				usleep(ATTENTE);
@@ -166,12 +170,13 @@ int main(){
 			}
 		}
 	} while (touche!=STOP && !collision && !gagne);
+
     enable_echo();
 	gotoxy(1, HAUTEUR_PLATEAU+1);
 	clock_t end = clock();
 	double tmpsCPU = ((end - begin)*1.0) / CLOCKS_PER_SEC;
 	printf("Temps CPU = %f secondes, nombre de déplacements = %d\n",tmpsCPU, nbMove);
-	return EXIT_SUCCESS;
+	return 0;
 }
 
 
@@ -243,62 +248,29 @@ void dessinerSerpent(int lesX[], int lesY[]){
 }
 
 void calcTraj(tPlateau plateau, int lesX[], int lesY[], char *direction, int objectif_x, int objectif_y){
-	char classement[NB_DIRECTIONS] ;
-	int i ;
-	i = 0 ;
 
 	// axe X
-    if (lesX[0] < objectif_x) {
-        classement[i++] = DROITE; //la direction prioritaire devient droite
+    if (lesX[0] < objectif_x && *direction!=GAUCHE) {
+        *direction = DROITE; //la direction devient droite
     } 
 	
-	else if (lesX[0] > objectif_x) {
-        classement[i++] = GAUCHE; //la direction prioritaire devient gauche
+	else if (lesX[0] > objectif_x && *direction!= DROITE) {
+        *direction = GAUCHE; //la direction devient gauche
     }
 
 	// axe Y
-	if (lesY[0] > objectif_y) {
-        classement[i++] = HAUT; //la direction prioritaire devient haut
+	if (lesY[0] > objectif_y && *direction != BAS) {
+        *direction = HAUT; //la direction devient haut
     } 
-	else if (lesY[0] < objectif_y) {
-        classement[i++] = BAS; //la direction prioritaire devient bas
+	else if (lesY[0] < objectif_y && *direction != HAUT) {
+        *direction = BAS; //la direction devient bas
     }
 
-	if (i < NB_DIRECTIONS){
-		if (lesX[0] >= objectif_x)
-		{
-			classement[i++]= DROITE;
-		}
-		if (lesX[0] <= objectif_x)
-		{
-			classement[i++]= GAUCHE;
-		}
-		if (lesY[0] <= objectif_y)
-		{
-			classement[i++]= HAUT;
-		}
-		if (lesY[0] >= objectif_y)
-		{
-			classement[i++]= BAS;
-		}
-	}
-	
-	*direction = classement[i];
 }
 
 
-
-bool crash(int x, int y, int lesX[], int lesY[]){ //vérifie si il y a une collision avec le corps du serpent
-	int i ;
-	bool ok = false;
-	for (i=1 ; i<TAILLE ; i++) {
-		if (lesX[i] == x && lesY[i] == y) {
-			ok = true ;
-		}
-	}
-	return ok;
-}
-
+/* Cette procédure calcule les distances entre le serpent et la pomme à travers les
+différents portails, et renvoie à l'aide de pointeur les coordonnées de l'objectif*/
 void trajOpti(int lesX[], int lesY[], int nb_pomme, char direction, int *objectif_x, int *objectif_y){
 	int Distance_pomme, distance_min;
 	int sortie_oppose, sortie, sortie_min ;
@@ -312,12 +284,13 @@ void trajOpti(int lesX[], int lesY[], int nb_pomme, char direction, int *objecti
 	distance_min = Distance_pomme ;
 
 	for (sortie = 0 ; sortie < NB_DIRECTIONS ; sortie++) {
-		sortie_oppose = (sortie + NB_DIRECTIONS / 2) % NB_DIRECTIONS ; //pour trouver l'opposé en deux
+		sortie_oppose = (sortie + NB_DIRECTIONS / 2) % NB_DIRECTIONS ; //pour trouver la sortie opposé au portail que l'on prends potentiellement
 		distance = (abs(lesX[0] - portail_X[sortie]) + 
 					abs(lesY[0] - portail_Y[sortie]) + 
 					abs(lesPommesX[nb_pomme] - portail_X[sortie_oppose]) + 
 					abs(lesPommesY[nb_pomme] - portail_Y[sortie_oppose])
 					) ;
+		
 		if (distance_min > distance) {
 			distance_min = distance ;
 			sortie_min = sortie ;
@@ -331,7 +304,6 @@ void trajOpti(int lesX[], int lesY[], int nb_pomme, char direction, int *objecti
 		*objectif_x = portail_X[sortie_min] ;
 		*objectif_y = portail_Y[sortie_min] ;
 	}
-
 }
 
 
@@ -339,6 +311,7 @@ void progresser(int lesX[], int lesY[], char direction, tPlateau plateau, bool *
 	// efface le dernier élément avant d'actualiser la position de tous les 
 	// éléments du serpent avant de le  redessiner et détecte une
 	// collision avec une pomme ou avec une bordure
+
 	effacer(lesX[TAILLE-1], lesY[TAILLE-1]);
 
 	for(int i=TAILLE-1 ; i>0 ; i--){
@@ -347,19 +320,20 @@ void progresser(int lesX[], int lesY[], char direction, tPlateau plateau, bool *
 	}
 	//faire progresser la tete dans la nouvelle direction
 	switch(direction){
-		case HAUT : 
-			lesY[0] = lesY[0] - 1;
-			break;
-		case BAS:
-			lesY[0] = lesY[0] + 1;
-			break;
-		case DROITE:
-			lesX[0] = lesX[0] + 1;
-			break;
-		case GAUCHE:
-			lesX[0] = lesX[0] - 1;
-			break;
+	case HAUT : 
+		lesY[0] = lesY[0] - 1;
+		break;
+	case BAS:
+		lesY[0] = lesY[0] + 1;
+		break;
+	case DROITE:
+		lesX[0] = lesX[0] + 1;
+		break;
+	case GAUCHE:
+		lesX[0] = lesX[0] - 1;
+		break;
 	}
+
 	*pomme = false;
 	// détection d'une "collision" avec une pomme
 	if (plateau[lesX[0]][lesY[0]] == POMME){
@@ -468,4 +442,15 @@ void enable_echo() {
         perror("tcsetattr");
         exit(EXIT_FAILURE);
     }
+}
+
+bool crash(int x, int y, int lesX[], int lesY[]){ //vérifie si il y a une collision avec le corps du serpent
+	int i ;
+	bool ok = false;
+	for (i=1 ; i<TAILLE ; i++) {
+		if (lesX[i] == x && lesY[i] == y) {
+			ok = true ;
+		}
+	}
+	return ok;
 }
