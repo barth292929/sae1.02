@@ -69,7 +69,7 @@ void dessinerSerpent(int lesX[], int lesY[]);
 void progresser(int lesX[], int lesY[], char direction, tPlateau plateau, bool * collision, bool * pomme);
 void calcTraj(tPlateau plateau, int lesX[], int lesY[], char *direction, int objectif_x, int objectif_y);
 bool crash(int x, int y, int lesX[], int lesY[]);
-void trajOpti(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direction, int *objectif_x, int *objectif_y);
+void trajOpti(int lesX[], int lesY[], int nb_pomme, char direction, int *objectif_x, int *objectif_y);
 void gotoxy(int x, int y);
 int  kbhit();
 void disable_echo();
@@ -134,7 +134,7 @@ int main(){
 
 	// boucle de jeu. Arret si touche STOP, si collision avec une bordure ou
 	// si toutes les pommes sont mangées
-	trajOpti(lePlateau, lesX, lesY, nbPommes, direction, &objectif_x, &objectif_y) ;
+	trajOpti(lesX, lesY, nbPommes, direction, &objectif_x, &objectif_y) ;
 	do 
 	{
 		calcTraj(lePlateau, lesX, lesY, &direction, objectif_x, objectif_y); 
@@ -153,7 +153,7 @@ int main(){
 				if (!pommeMangee) { 
 					progresser(lesX, lesY, direction, lePlateau, &collision, &pommeMangee);
 				}
-				trajOpti(lePlateau, lesX, lesY, nbPommes, direction, &objectif_x, &objectif_y) ;
+				trajOpti(lesX, lesY, nbPommes, direction, &objectif_x, &objectif_y) ;
 			}
 			
 		}
@@ -243,17 +243,47 @@ void dessinerSerpent(int lesX[], int lesY[]){
 }
 
 void calcTraj(tPlateau plateau, int lesX[], int lesY[], char *direction, int objectif_x, int objectif_y){
+	char classement[NB_DIRECTIONS] ;
+	int i ;
+	i = 0 ;
+
+	// axe X
     if (lesX[0] < objectif_x) {
-        *direction = DROITE;
-    } else if (lesX[0] > objectif_x) {
-        *direction = GAUCHE;
-    }
-	if (lesY[0] > objectif_y) {
-        *direction = HAUT;
-    } else if (lesY[0] < objectif_y) {
-        *direction = BAS;
+        classement[i++] = DROITE; //la direction prioritaire devient droite
+    } 
+	
+	else if (lesX[0] > objectif_x) {
+        classement[i++] = GAUCHE; //la direction prioritaire devient gauche
     }
 
+	// axe Y
+	if (lesY[0] > objectif_y) {
+        classement[i++] = HAUT; //la direction prioritaire devient haut
+    } 
+	else if (lesY[0] < objectif_y) {
+        classement[i++] = BAS; //la direction prioritaire devient bas
+    }
+
+	if (i < NB_DIRECTIONS){
+		if (lesX[0] >= objectif_x)
+		{
+			classement[i++]= DROITE;
+		}
+		if (lesX[0] <= objectif_x)
+		{
+			classement[i++]= GAUCHE;
+		}
+		if (lesY[0] <= objectif_y)
+		{
+			classement[i++]= HAUT;
+		}
+		if (lesY[0] >= objectif_y)
+		{
+			classement[i++]= BAS;
+		}
+	}
+	
+	*direction = classement[i];
 }
 
 
@@ -269,7 +299,7 @@ bool crash(int x, int y, int lesX[], int lesY[]){ //vérifie si il y a une colli
 	return ok;
 }
 
-void trajOpti(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direction, int *objectif_x, int *objectif_y){
+void trajOpti(int lesX[], int lesY[], int nb_pomme, char direction, int *objectif_x, int *objectif_y){
 	int Distance_pomme, distance_min;
 	int sortie_oppose, sortie, sortie_min ;
 	int distance ;
