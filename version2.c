@@ -47,6 +47,9 @@
 #define BORDURE '#'
 #define VIDE ' '
 #define POMME '6'
+//nombre de directions
+#define NB_DIRECTIONS 4
+#define NB_SORTIE 4
 
 
 // définition d'un type pour le plateau : tPlateau
@@ -66,7 +69,7 @@ void dessinerSerpent(int lesX[], int lesY[]);
 void progresser(int lesX[], int lesY[], char direction, tPlateau plateau, bool * collision, bool * pomme);
 char calcTraj(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direction);
 bool crash(int x, int y, int lesX[], int lesY[]);
-char trajOpti(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direction);
+void trajOpti(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direction, int *objectif_x, int *objectif_y);
 void gotoxy(int x, int y);
 int  kbhit();
 void disable_echo();
@@ -74,6 +77,9 @@ void enable_echo();
 
 int lesPommesX[NB_POMMES] = {75, 75, 78, 2, 8, 78, 74, 2, 72, 5};
 int lesPommesY[NB_POMMES] = { 8, 39, 2, 2, 5, 39, 33, 38, 35, 2};
+
+int portail_X[] = {LARGEUR_PLATEAU/2, LARGEUR_PLATEAU, LARGEUR_PLATEAU/2, 1} ;
+int portail_Y[] = {1, HAUTEUR_PLATEAU/2, HAUTEUR_PLATEAU, HAUTEUR_PLATEAU/2} ;
 
 
 int main(){
@@ -100,6 +106,8 @@ int main(){
 
 	// compteur de pommes mangées
 	int nbPommes = 0;
+	int objectif_x ;
+	int objectif_y ;
    
 	// initialisation de la position du serpent : positionnement de la
 	// tête en (X_INITIAL, Y_INITIAL), puis des anneaux à sa gauche
@@ -123,7 +131,7 @@ int main(){
 	disable_echo();
 	direction = DROITE;
 	collision = crash(x, y, lesX, lesY) ;
-	trajOpti(lePlateau, lesX, lesY, nbPommes, direction) ;
+	trajOpti(lePlateau, lesX, lesY, nbPommes, direction, &objectif_x, &objectif_y) ;
 
 	// boucle de jeu. Arret si touche STOP, si collision avec une bordure ou
 	// si toutes les pommes sont mangées
@@ -184,10 +192,9 @@ void initPlateau(tPlateau plateau){
 		plateau[i][HAUTEUR_PLATEAU] = BORDURE;
 	}
 
-	plateau[LARGEUR_PLATEAU/2][HAUTEUR_PLATEAU] = VIDE; 	//trou du bas
-	plateau[LARGEUR_PLATEAU / 2][1] = VIDE;					//trou du haut
-	plateau[1][HAUTEUR_PLATEAU / 2] = VIDE;					//trou de gauche
-	plateau[LARGEUR_PLATEAU][HAUTEUR_PLATEAU / 2] = VIDE;	//trou de droite
+	for(int i = 0 ; i<NB_SORTIE ; i++) {
+		plateau[portail_X[i]][portail_Y[i]] = VIDE ;
+	}
 }
 
 void dessinerPlateau(tPlateau plateau){
@@ -241,6 +248,7 @@ char calcTraj(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direc
         newDir = BAS;
     }
     return newDir;
+
 }
 
 
@@ -256,25 +264,38 @@ bool crash(int x, int y, int lesX[], int lesY[]){ //vérifie si il y a une colli
 	return ok;
 }
 
-char trajOpti(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direction){
-	int Distance_pomme, Distance_gauche, Distance_droite, Distance_haut, Distance_bas;
+void trajOpti(tPlateau plateau, int lesX[], int lesY[], int nb_pomme, char direction, int *objectif_x, int *objectif_y){
+	int Distance_pomme, Distance_gauche, Distance_droite, Distance_haut, Distance_bas, distance_min;
+	int sortie_oppose, sortie, sortie_min ;
+	int distance ;
 
+	sortie_min = -1 ;
 
 	// calcul de la distance serpent->pomme
 	Distance_pomme = (abs(lesX[0]-lesPommesX[nb_pomme]) + abs(lesY[0]-lesPommesY[nb_pomme])); //abs pour absolute
 
-	//calcul de la distance serpent->pomme en prenant le portail de gauche
-	Distance_gauche = ((abs(lesX[0] -1) + abs(lesY[0]- HAUTEUR_PLATEAU/2))+(abs(lesPommesX[nb_pomme] -1)+abs(lesPommesY[nb_pomme]- HAUTEUR_PLATEAU/2)));
+	distance_min = Distance_pomme ;
 
-	//calcul de la distance serpent->pomme en prenant le portail de droite
-	Distance_droite = ((abs(lesX[0]- LARGEUR_PLATEAU) + abs(lesY[0]- HAUTEUR_PLATEAU/2))+(abs(lesPommesX[nb_pomme]- LARGEUR_PLATEAU)+abs(lesPommesY[nb_pomme]- HAUTEUR_PLATEAU/2)));
+	for (sortie = 0 ; sortie < NB_DIRECTIONS ; sortie++) {
+		sortie_oppose = (sortie + NB_DIRECTIONS / 2) % NB_DIRECTIONS ; //pour trouver l'opposé en deux
+		distance = (abs(lesX[0] - portail_X[sortie]) + 
+					abs(lesY[0] - portail_Y[sortie]) + 
+					abs(lesPommesX[nb_pomme] - portail_X[sortie_oppose]) + 
+					abs(lesPommesY[nb_pomme] - portail_Y[sortie_oppose])
+					) ;
+		if (distance_min > distance) {
+			distance_min = distance ;
+			sortie_min = sortie ;
+		}
+	}
 
-	//calcul de la distance serpent->pomme en prenant le portail du haut
-	Distance_haut = ((abs(lesX[0]- LARGEUR_PLATEAU/2) + abs(lesY[0]- 1))+(abs(lesPommesX[nb_pomme]- LARGEUR_PLATEAU/2)+abs(lesPommesY[nb_pomme] -1)));
-
-	//calcul de la distance serpent->pomme en prenant le portail du bas
-	Distance_bas = ((abs(lesX[0]- LARGEUR_PLATEAU/2) + abs(lesY[0]- HAUTEUR_PLATEAU))+(abs(lesPommesX[nb_pomme]- LARGEUR_PLATEAU/2)+abs(lesPommesY[nb_pomme] -HAUTEUR_PLATEAU)));
-	
+	if (sortie_min == -1) {
+		*objectif_x = lesPommesX[nb_pomme] ;
+		*objectif_y = lesPommesY[nb_pomme] ;
+	} else {
+		*objectif_x = portail_X[sortie_min] ;
+		*objectif_y = portail_Y[sortie_min] ;
+	}
 
 }
 
