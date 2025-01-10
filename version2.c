@@ -4,13 +4,17 @@
 *
 * \author HAMON Gabriel, GOUJON Barthélemy
 *
-* \version 2
+* \version 3
 *
-* \date 6 Décembre 2024
+* \date 10 Janvier 2025
 *
-* Ce programme est la 1ere version du jeu snake codé en C 
-* dans le terminal et automatisé
+* Ce programme est la 3ere version de la SAE-102
+* Objectif : implémenter un système d'obstacles
 *
+*
+* Stratégie utilisée : pour l'objectif que le serpent doit atteindre, on compare les distances en prenant en compte les portails 
+* pour trouver le chemin le plus court. Ensuite, il se dirige vers cet objectif, en évitant au besoin les pavés et lui-même, 
+* grâce à une procédure qui calcule sa prochaine position.
 */
 
 #include <stdio.h>
@@ -50,6 +54,10 @@
 //nombre de directions
 #define NB_DIRECTIONS 4
 #define NB_SORTIE 4
+// caractéristiques des pavés
+#define NB_PAVES 6
+#define TAILLE_BLOC 5
+#define PAVE '#'
 
 
 // définition d'un type pour le plateau : tPlateau
@@ -63,12 +71,13 @@ typedef char tPlateau[LARGEUR_PLATEAU+1][HAUTEUR_PLATEAU+1];
 void initPlateau(tPlateau plateau);
 void dessinerPlateau(tPlateau plateau);
 void ajouterPomme(tPlateau plateau, int nb_pomme);
+void ajouterPave(tPlateau plateau);
 void afficher(int, int, char);
 void effacer(int x, int y);
 void dessinerSerpent(int lesX[], int lesY[]);
 void progresser(int lesX[], int lesY[], char direction, tPlateau plateau, bool * collision, bool * pomme);
 void calcTraj(tPlateau plateau, int lesX[], int lesY[], char *direction, int objectif_x, int objectif_y, int *prochaine_position_x, int *prochaine_position_y);
-bool crash(int lesX[], int lesY[], char direction,  int *prochaine_position_x, int *prochaine_position_y);
+bool crash(int lesX[], int lesY[], char direction,  int *prochaine_position_x, int *prochaine_position_y, tPlateau plateau);
 void trajOpti(int lesX[], int lesY[], int nb_pomme, char direction, int *objectif_x, int *objectif_y);
 void prochaine_position(int lesX[], int lesY[], int *prochaine_position_x, int *prochaine_position_y, char direction) ;
 void gotoxy(int x, int y);
@@ -77,9 +86,15 @@ void disable_echo();
 void enable_echo();
 int Modulo(int x,int N);
 
+// coordonnées des pommes
 int lesPommesX[NB_POMMES] = {75, 75, 78, 2, 8, 78, 74, 2, 72, 5};
 int lesPommesY[NB_POMMES] = { 8, 39, 2, 2, 5, 39, 33, 38, 35, 2};
 
+// coordonnées des pavés
+int lesPavesX[NB_PAVES] = { 3, 74, 3, 74, 38, 38};
+int lesPavesY[NB_PAVES] = { 3, 3, 34, 34, 21, 15};
+
+// coordonnées des portails
 int portail_X[] = {LARGEUR_PLATEAU/2, LARGEUR_PLATEAU, LARGEUR_PLATEAU/2, 1} ;
 int portail_Y[] = {1, HAUTEUR_PLATEAU/2, HAUTEUR_PLATEAU, HAUTEUR_PLATEAU/2} ;
 
@@ -122,6 +137,7 @@ int main(){
 
 	// mise en place du plateau
 	initPlateau(lePlateau);
+	ajouterPave(lePlateau);
 	system("clear");
 	dessinerPlateau(lePlateau);
 
@@ -133,7 +149,7 @@ int main(){
 	disable_echo();
 	direction = DROITE;
 	prochaine_position(lesX, lesY, &prochaine_position_x, &prochaine_position_y, direction) ;
-	collision = crash(lesX, lesY, direction, &prochaine_position_x, &prochaine_position_y) ;
+	collision = crash(lesX, lesY, direction, &prochaine_position_x, &prochaine_position_y, lePlateau) ;
 
 	// boucle de jeu. Arret si touche STOP, si collision avec une bordure ou
 	// si toutes les pommes sont mangées
@@ -229,6 +245,20 @@ void ajouterPomme(tPlateau plateau, int nb_pomme){
 	afficher(lesPommesX[nb_pomme], lesPommesY[nb_pomme], POMME);
 }
 
+void ajouterPave(tPlateau plateau){
+	int x, y;
+
+	for (int k = 0; k<NB_PAVES; k++){
+		x = lesPavesX[k];
+		y = lesPavesY[k];
+            for (int i = 0; i < TAILLE_BLOC; i++) {
+                for (int j = 0; j < TAILLE_BLOC; j++) {
+                    plateau[x + i][y + j] = PAVE; // Placer le pavé
+                }
+            }
+	}
+}
+
 void afficher(int x, int y, char car){
 	gotoxy(x, y);
 	printf("%c", car);
@@ -264,35 +294,45 @@ void calcTraj(tPlateau plateau, int lesX[], int lesY[], char *direction, int obj
 
 	switch (*direction){
 		case HAUT: //vérifie si il y a une collision vers le haut
-			if (*direction == HAUT && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y)==true){
+			if (*direction == HAUT && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)==true){
 				*direction = DROITE;
-				if (*direction == DROITE && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y)==true){
+				printf("test1");
+				if (*direction == DROITE && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)==true){
 					*direction = GAUCHE;
+				printf("\t\t test2");
 				}
 			}
 		break;
 
 		case BAS: //vérifie si il y a une collision vers le bas
-			if (*direction == BAS && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y)==true){
+			if (*direction == BAS && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)==true){
 				*direction = DROITE;
-				if (*direction == DROITE && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y)==true){
+				printf("\t\t\t\t test3");
+				if (*direction == DROITE && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)==true){
 					*direction = GAUCHE;
+				printf("\t\t\t\t\t\t test4");
 				}
 			}
 		break;
+
 		case GAUCHE: //vérifie si il y a une collision vers le gauche
-			if (*direction == GAUCHE && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y)==true){
+			if (*direction == GAUCHE && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)==true){
 			*direction = BAS;
-				if (*direction == BAS && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y)==true){
+			printf("\t\t\t\t\t\t\t\t test5");
+				if (*direction == BAS && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)==true){
 					*direction = HAUT;
+				printf("\t\t\t\t\t\t\t\t\t\t test6");
 				}
 			}
 		break;
+
 		case DROITE: //vérifie si il y a une collision vers le droite
-		if (*direction == DROITE && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y)==true){
+		if (*direction == DROITE && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)==true){
 			*direction = BAS;
-			if (*direction == BAS && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y)==true){
+			printf("\t\t\t\t\t\t\t\t\t\t test7");
+			if (*direction == BAS && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)==true){
 				*direction = HAUT;
+				printf("\t\t\t\t\t\t\t\t\t\t test8");
 			}
 		}
 		break;
@@ -302,16 +342,33 @@ void calcTraj(tPlateau plateau, int lesX[], int lesY[], char *direction, int obj
 
 
 
-bool crash(int lesX[], int lesY[], char direction,  int *prochaine_position_x, int *prochaine_position_y){ //vérifie si il y a une collision avec le corps du serpent
+bool crash(int lesX[], int lesY[], char direction,  int *prochaine_position_x, int *prochaine_position_y, tPlateau plateau){ //vérifie si il y a une collision avec le corps du serpent
 
 	int i ;
 	bool ok = false;
 	prochaine_position(lesX, lesY, prochaine_position_x, prochaine_position_y, direction);
+
+	// détecte à l'avance une collision avec lui-même
 	for (i=1 ; i<TAILLE ; i++) {
 		if (*prochaine_position_x == lesX[i] && *prochaine_position_y==lesY[i]){
 			ok = true;
 		}
 	}
+
+	// détecte à l'avance une collision avec un pavé
+    for (int x = 0; x < HAUTEUR_PLATEAU; x++)
+    {
+        for (int y = 0; y < LARGEUR_PLATEAU; y++)
+        {
+            if (plateau[x][y] == PAVE)
+            {
+                if (*prochaine_position_x == x && *prochaine_position_y == y)
+                {
+                    ok = true;
+                }
+            }
+        }
+    }
 	return ok;
 }
 
@@ -415,9 +472,9 @@ void progresser(int lesX[], int lesY[], char direction, tPlateau plateau, bool *
 		plateau[lesX[0]][lesY[0]] = VIDE;
 	}
 	// détection d'une collision avec la bordure
-	else if (plateau[lesX[0]][lesY[0]] == BORDURE){
+	/*else if (plateau[lesX[0]][lesY[0]] == BORDURE){
 		*collision = true;
-	}
+	}*/
 
    	dessinerSerpent(lesX, lesY);
 }
