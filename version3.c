@@ -37,7 +37,7 @@
 // nombre de pommes à manger pour gagner
 #define NB_POMMES 10
 // temporisation entre deux déplacements du serpent (en microsecondes)
-#define ATTENTE 100000
+#define ATTENTE 60000
 // caractères pour représenter le serpent
 #define CORPS 'X'
 #define TETE 'O'
@@ -279,60 +279,60 @@ void dessinerSerpent(int lesX[], int lesY[]){
 }
 
 
-void calcTraj(tPlateau plateau, int lesX[], int lesY[], char *direction, int objectif_x, int objectif_y, int *prochaine_position_x, int *prochaine_position_y){
+void calcTraj(tPlateau plateau, int lesX[], int lesY[], char *direction, int objectif_x, int objectif_y, int *prochaine_position_x, int *prochaine_position_y) {
 
-	if (lesX[0] < objectif_x && *direction!=GAUCHE) {
-		*direction = DROITE ; //emmène le serpent vers la droite
-	}else if (lesX[0] > objectif_x && *direction !=DROITE) {
-		*direction = GAUCHE ;//emmène le serpent vers la gauche
-	}
-	if (lesY[0] < objectif_y && *direction != HAUT) {
-		*direction = BAS ;//emmène le serpent vers le bas
-	} else if (lesY[0] > objectif_y && *direction != BAS) {
-		*direction = HAUT ;//emmène le serpent vers le haut
-	}
+    if (lesX[0] < objectif_x && *direction != GAUCHE) {
+        *direction = DROITE; // Emmène le serpent vers la droite
+    } else if (lesX[0] > objectif_x && *direction != DROITE) {
+        *direction = GAUCHE; // Emmène le serpent vers la gauche
+    }
 
-	switch (*direction){
-		case HAUT: //vérifie si il y a une collision vers le haut
-			if (*direction == HAUT && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)==true){
-				*direction = DROITE;
-				
-				if (*direction == DROITE && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)==true){
-					*direction = GAUCHE;
-				}
-			}
-		break;
+    if (lesY[0] < objectif_y && *direction != HAUT) {
+        *direction = BAS; // Emmène le serpent vers le bas
+    } else if (lesY[0] > objectif_y && *direction != BAS) {
+        *direction = HAUT; // Emmène le serpent vers le haut
+    }
 
-		case BAS: //vérifie si il y a une collision vers le bas
-			if (*direction == BAS && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)==true){
-				*direction = DROITE;
+    
+	// On vérifie si la direction actuelle est toujours valide
+    if (!crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)) {
+        // Si la direction actuelle est valide, on continue dans cette direction
+        return;
+    }
 
-				if (*direction == DROITE && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)==true){
-					*direction = GAUCHE;
-				}
-			}
-		break;
+	// Si la direction n'est pas valide, on essaye une autre direction
+    if (crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)) {
 
-		case GAUCHE: //vérifie si il y a une collision vers le gauche
-			if (*direction == GAUCHE && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)==true){
-				*direction = BAS;
+        switch (*direction) { // essaye 1 par 1 les directions possibles
+            case HAUT:
+                *direction = DROITE;
+                if (crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)) {
+                    *direction = GAUCHE;
+                }
+                break;
 
-				if (*direction == BAS && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)==true){
-					*direction = HAUT;
-				}
-			}
-		break;
+            case BAS:
+                *direction = DROITE;
+                if (crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)) {
+                    *direction = GAUCHE;
+                }
+                break;
 
-		case DROITE: //vérifie si il y a une collision vers le droite
-		if (*direction == DROITE && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)==true){
-			*direction = BAS;
-			
-			if (*direction == BAS && crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)==true){
-				*direction = HAUT;
-			}
-		}
-		break;
-	}
+            case GAUCHE:
+                *direction = HAUT;
+                if (crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)) {
+                    *direction = BAS;
+                }
+                break;
+
+            case DROITE:
+                *direction = HAUT;
+                if (crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)) {
+                    *direction = BAS;
+                }
+                break;
+        }
+    }
 }
 
 
