@@ -6,7 +6,7 @@
 *
 * \version 3
 *
-* \date 14 Janvier 2025
+* \date 10 Janvier 2025
 *
 * Ce programme est la 3ere version de la SAE-102
 * Objectif : implémenter un système d'obstacles
@@ -37,7 +37,7 @@
 // nombre de pommes à manger pour gagner
 #define NB_POMMES 10
 // temporisation entre deux déplacements du serpent (en microsecondes)
-#define ATTENTE 60000
+#define ATTENTE 50000
 // caractères pour représenter le serpent
 #define CORPS 'X'
 #define TETE 'O'
@@ -280,7 +280,6 @@ void dessinerSerpent(int lesX[], int lesY[]){
 
 
 void calcTraj(tPlateau plateau, int lesX[], int lesY[], char *direction, int objectif_x, int objectif_y, int *prochaine_position_x, int *prochaine_position_y) {
-
     if (lesX[0] < objectif_x && *direction != GAUCHE) {
         *direction = DROITE; // Emmène le serpent vers la droite
     } else if (lesX[0] > objectif_x && *direction != DROITE) {
@@ -292,7 +291,6 @@ void calcTraj(tPlateau plateau, int lesX[], int lesY[], char *direction, int obj
     } else if (lesY[0] > objectif_y && *direction != BAS) {
         *direction = HAUT; // Emmène le serpent vers le haut
     }
-
     
 	// On vérifie si la direction actuelle est toujours valide
     if (!crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)) {
@@ -308,34 +306,44 @@ void calcTraj(tPlateau plateau, int lesX[], int lesY[], char *direction, int obj
                 *direction = DROITE;
                 if (crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)) {
                     *direction = GAUCHE;
-                }
-                break;
+					if (crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)) {
+						*direction = BAS;
+                	}
+				}
+            break;
 
             case BAS:
                 *direction = DROITE;
                 if (crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)) {
                     *direction = GAUCHE;
+					if (crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)) {
+						*direction = HAUT;
+                	}
                 }
-                break;
+            break;
 
             case GAUCHE:
                 *direction = HAUT;
                 if (crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)) {
                     *direction = BAS;
+					if (crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)) {
+						*direction = DROITE;
+                	}
                 }
-                break;
+            break;
 
             case DROITE:
                 *direction = HAUT;
                 if (crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)) {
                     *direction = BAS;
+					if (crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)) {
+						*direction = GAUCHE;
+                	}
                 }
-                break;
+            break;
         }
     }
 }
-
-
 
 
 
@@ -353,9 +361,9 @@ bool crash(int lesX[], int lesY[], char direction,  int *prochaine_position_x, i
 	}
 
 	// détecte à l'avance une collision avec un pavé
-    for (int x = 0; x < LARGEUR_PLATEAU; x++)
+    for (int x = 0; x < LARGEUR_PLATEAU+1; x++)
     {
-        for (int y = 0; y < HAUTEUR_PLATEAU; y++)
+        for (int y = 0; y < HAUTEUR_PLATEAU+1; y++)
         {
             if (plateau[x][y] == BORDURE)
             {
