@@ -13,8 +13,9 @@
 *
 *
 * Stratégie utilisée : pour l'objectif que le serpent doit atteindre, on compare les distances en prenant en compte les portails 
-* pour trouver le chemin le plus court. Ensuite, il se dirige vers cet objectif, en évitant au besoin les pavés et lui-même, 
-* grâce à une procédure qui calcule sa prochaine position.
+* pour trouver le chemin le plus court. Le serpent regarde d'abord l'axe Y, puis l'axe X. Ensuite, il se dirige vers cet objectif, 
+* en évitant au besoin les pavés et lui-même, grâce à une procédure qui calcule sa prochaine position. Si son objectif se troyve à
+* l'opposé de sa direction actuelle et qu'il ne peut pas tourner, il continue d'avancer jusqu'à ce que se soit possible.
 */
 
 #include <stdio.h>
@@ -301,8 +302,8 @@ void calcTraj(tPlateau plateau, int lesX[], int lesY[], char *direction, int obj
 	// Si la direction n'est pas valide, on essaye une autre direction
     if (crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)) {
 
-        switch (*direction) { // essaye 1 par 1 les directions possibles
-            case HAUT:
+        switch (*direction) {
+            case HAUT: // essaye 1 par 1 les directions possibles
                 *direction = DROITE;
                 if (crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)) {
                     *direction = GAUCHE;
@@ -312,7 +313,7 @@ void calcTraj(tPlateau plateau, int lesX[], int lesY[], char *direction, int obj
 				}
             break;
 
-            case BAS:
+            case BAS: // essaye 1 par 1 les directions possibles
                 *direction = DROITE;
                 if (crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)) {
                     *direction = GAUCHE;
@@ -322,7 +323,7 @@ void calcTraj(tPlateau plateau, int lesX[], int lesY[], char *direction, int obj
                 }
             break;
 
-            case GAUCHE:
+            case GAUCHE: // essaye 1 par 1 les directions possibles
                 *direction = HAUT;
                 if (crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)) {
                     *direction = BAS;
@@ -332,7 +333,7 @@ void calcTraj(tPlateau plateau, int lesX[], int lesY[], char *direction, int obj
                 }
             break;
 
-            case DROITE:
+            case DROITE: // essaye 1 par 1 les directions possibles
                 *direction = HAUT;
                 if (crash(lesX, lesY, *direction, prochaine_position_x, prochaine_position_y, plateau)) {
                     *direction = BAS;
@@ -360,10 +361,10 @@ bool crash(int lesX[], int lesY[], char direction,  int *prochaine_position_x, i
 		}
 	}
 
-	// détecte à l'avance une collision avec un pavé
-    for (int x = 0; x < LARGEUR_PLATEAU+1; x++)
+	// détecte à l'avance une collision avec un pavé ou la bordure
+    for (int x = 0; x < LARGEUR_PLATEAU+1; x++) // +1 pour prendre en compte la bordure
     {
-        for (int y = 0; y < HAUTEUR_PLATEAU+1; y++)
+        for (int y = 0; y < HAUTEUR_PLATEAU+1; y++) // +1 pour prendre en compte la bordure
         {
             if (plateau[x][y] == BORDURE)
             {
