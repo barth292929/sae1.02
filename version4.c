@@ -216,8 +216,8 @@ int main(){
     // boucle de jeu. Arret si touche STOP, si collision avec une bordure ou
     // si toutes les pommes sont mangées
     trajOpti(lesX, lesY, nbPommes, direction, &objectif_x, &objectif_y);
-    objectif_x2 = 37;
-    objectif_y2 = 18;
+    objectif_x2 = 42;
+    objectif_y2 = 21;
     do 
     {
         if (Tour == 0){
@@ -236,11 +236,13 @@ int main(){
                 }   
             }
 
-            if ((lesX[0] == objectif_x && lesY[0] == objectif_y) || (lePlateau[objectif_x][objectif_y] == TETE_2)) { //lorsque l'objectif est atteint
-                if (!pommeMangee) {                              // et que l'objectif n'est pas une pomme
+            if ((lesX[0] == objectif_x && lesY[0] == objectif_y) || (lesX_2[0] == objectif_x && lesY_2[0] == objectif_y)) { //lorsque l'objectif est atteint
+            for (int k = 0; k<NB_SORTIE; k++){
+                if (!pommeMangee && objectif_x == portail_X[k] && objectif_y == portail_Y[k]) {                              // et que l'objectif n'est pas une pomme
                     progresser(lesX, lesY, direction, lePlateau, &collision, &pommeMangee);
                     progresser(lesX, lesY, direction, lePlateau, &collision, &pommeMangee); //on progresse de 2 car le portail est situé au niveau de bordure
                     nbMove += 2;
+            }
                 }
                 trajOpti(lesX, lesY, nbPommes, direction, &objectif_x, &objectif_y) ; //calcul les coordonnées du nouvel objectif
             }
@@ -262,11 +264,13 @@ int main(){
                 }   
             }
 
-            if ((lesX_2[0] == objectif_x2 && lesY_2[0] == objectif_y2) || (lePlateau[objectif_x][objectif_y] == TETE_1)) { //lorsque l'objectif est atteint
-                if (!pommeMangee) {                                     // et que l'objectif n'est pas une pomme
+            if ((lesX_2[0] == objectif_x2 && lesY_2[0] == objectif_y2) || (lesX[0] == objectif_x2 && lesY[0] == objectif_y2)) { //lorsque l'objectif est atteint
+            for (int k = 0; k<NB_SORTIE; k++){
+                if (!pommeMangee && objectif_x2 == portail_X[k] && objectif_y2 == portail_Y[k]) {                                     // et que l'objectif n'est pas une pomme
                     progresser2(lesX_2, lesY_2, direction2, lePlateau, &collision, &pommeMangee);
                     progresser2(lesX_2, lesY_2, direction2, lePlateau, &collision, &pommeMangee); //on progresse de 2 car le portail est situé au niveau de bordure
                     nbMove += 2;
+            }
                 }
             trajOpti2(lesX_2, lesY_2, nbPommes, direction2, &objectif_x2, &objectif_y2);
             }
