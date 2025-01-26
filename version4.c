@@ -42,7 +42,7 @@
 // nombre de pommes à manger pour gagner
 #define NB_POMMES 10
 // temporisation entre deux déplacements du serpent (en microsecondes)
-#define ATTENTE 400000
+#define ATTENTE 100000
 // caractères pour représenter le serpent
 #define CORPS 'X'
 #define CORPS2 'S'
@@ -216,7 +216,8 @@ int main(){
     // boucle de jeu. Arret si touche STOP, si collision avec une bordure ou
     // si toutes les pommes sont mangées
     trajOpti(lesX, lesY, nbPommes, direction, &objectif_x, &objectif_y);
-    trajOpti2(lesX_2, lesY_2, nbPommes, direction2, &objectif_x2, &objectif_y2);
+    objectif_x2 = 37;
+    objectif_y2 = 18;
     do 
     {
         if (Tour == 0){
@@ -235,7 +236,7 @@ int main(){
                 }   
             }
 
-            if ((lesX[0] == objectif_x && lesY[0] == objectif_y) || (lePlateau[objectif_x][objectif_y] == VIDE)) { //lorsque l'objectif est atteint
+            if ((lesX[0] == objectif_x && lesY[0] == objectif_y) || (lePlateau[objectif_x][objectif_y] == TETE_2)) { //lorsque l'objectif est atteint
                 if (!pommeMangee) {                              // et que l'objectif n'est pas une pomme
                     progresser(lesX, lesY, direction, lePlateau, &collision, &pommeMangee);
                     progresser(lesX, lesY, direction, lePlateau, &collision, &pommeMangee); //on progresse de 2 car le portail est situé au niveau de bordure
@@ -261,7 +262,7 @@ int main(){
                 }   
             }
 
-            if ((lesX_2[0] == objectif_x2 && lesY_2[0] == objectif_y2) || (lePlateau[objectif_x][objectif_y] == VIDE)) { //lorsque l'objectif est atteint
+            if ((lesX_2[0] == objectif_x2 && lesY_2[0] == objectif_y2) || (lePlateau[objectif_x][objectif_y] == TETE_1)) { //lorsque l'objectif est atteint
                 if (!pommeMangee) {                                     // et que l'objectif n'est pas une pomme
                     progresser2(lesX_2, lesY_2, direction2, lePlateau, &collision, &pommeMangee);
                     progresser2(lesX_2, lesY_2, direction2, lePlateau, &collision, &pommeMangee); //on progresse de 2 car le portail est situé au niveau de bordure
@@ -615,7 +616,7 @@ bool crash(int lesX[], int lesY[], int lesX_2[], int lesY_2[], char direction,  
     bool ok = false;
     prochaine_position(lesX, lesY, prochaine_position_x, prochaine_position_y, direction);
 
-    // détecte à l'avance une collision avec lui-même
+    // détecte à l'avance une collision avec les serpents
     for (i=1 ; i<TAILLE ; i++) {
         if
 		( 
@@ -884,6 +885,3 @@ void enable_echo() {
 int Modulo(int x,int N){
     return (x % N + N) %N;
 }
-
-
-	
