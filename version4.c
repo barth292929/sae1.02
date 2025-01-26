@@ -5,18 +5,23 @@
 *
 * \author HAMON Gabriel, GOUJON Barthélemy
 *
-* \version 3
+* \version 4
 *
-* \date 10 Janvier 2025
+* \date 26 Janvier 2025
 *
-* Ce programme est la 3ere version de la SAE-102
-* Objectif : implémenter un système d'obstacles
+* Ce programme est la 4eme version de la SAE-102
+* Objectif : implémenter un deuxième serpent en rivalité avec le premier
 *
 *
-* Stratégie utilisée : pour l'objectif que le serpent doit atteindre, on compare les distances en prenant en compte les portails 
-* pour trouver le chemin le plus court. Le serpent regarde d'abord l'axe Y, puis l'axe X. Ensuite, il se dirige vers cet objectif, 
-* en évitant au besoin les pavés et lui-même, grâce à une procédure qui calcule sa prochaine position. Si son objectif se troyve à
-* l'opposé de sa direction actuelle et qu'il ne peut pas tourner, il continue d'avancer jusqu'à ce que se soit possible.
+* Stratégie utilisée : pour faire un deuxième serpent, nous avons dupliquées les procédures nécessaires
+* pour créer le snake (dessiner, progresser, Trajopti, Calctraj crash et prochaine_position). 
+*
+* Nous avons ensuite modifiés les procédures crash pour prendre en compte les collisions avec le 2e serpent, 
+* et nous avons aussi modifié le main afin que les serpents bougent tour à tour.
+* 
+* Nous avons aussi modifié le main afin de faire en sorte que lorsque le serpent 1 mange 
+* une pomme, le serpent 2 change d'objectif.
+*
 */
 
 #include <stdio.h>
@@ -109,7 +114,7 @@ int Modulo(int x,int N);
 
 // coordonnées des pommes
 int lesPommesX[NB_POMMES] = {40, 75, 78, 2, 9, 78, 74, 2, 72, 5};
-int lesPommesY[NB_POMMES] = {20, 38, 2, 2, 5, 38, 32, 38, 32, 2};
+int lesPommesY[NB_POMMES] = {20, 38, 2, 2, 3, 38, 32, 38, 32, 2};
 
 // coordonnées des pavés
 int lesPavesX[NB_PAVES] = { 4, 73, 4, 73, 38, 38};
@@ -119,9 +124,6 @@ int lesPavesY[NB_PAVES] = { 4, 4, 33, 33, 14, 22};
 int portail_X[] = {LARGEUR_PLATEAU/2, LARGEUR_PLATEAU, LARGEUR_PLATEAU/2, 1} ;
 int portail_Y[] = {1, HAUTEUR_PLATEAU/2, HAUTEUR_PLATEAU, HAUTEUR_PLATEAU/2} ;
 
-//nombre de pommes mangées par serpent 
-int nb_pomme1 ;
-int nb_pomme2 ;
 //coordonnées de départ du serpent
 
 
@@ -143,8 +145,7 @@ int main(){
     //position suivante du serpent 1
     int prochaine_position_x, prochaine_position_y;
     //nombre initial de pommes mangés par serpent
-    nb_pomme1 = 0 ;
-    nb_pomme2 = 0 ;
+    int nb_pomme1 = 0 ;
 
 
 	/************************************************/
@@ -162,6 +163,7 @@ int main(){
     int objectif_y2 ;
     //position suivante du serpent 2
     int prochaine_position_x2, prochaine_position_y2;
+    int nb_pomme2 = 0 ;
 
 	/************************************************/
 	/*      	 			MAIN		            */
@@ -235,8 +237,8 @@ int main(){
 
 
             if (pommeMangee){
-                nbPommes++; //augmente le nombre de pommes mangées
-                nb_pomme1++;//augmente le compteur de pommes du serpent 1
+                nb_pomme1++;    // augmente le nombre de pommes mangées par le serpent 1
+                nbPommes++;     //augmente le nombre de pommes mangées au total
                 gagne = (nbPommes==NB_POMMES);
                 if (!gagne){
                     ajouterPomme(lePlateau, nbPommes); //ajoute une pomme sur le plateau suite à la pomme mangée
@@ -244,12 +246,12 @@ int main(){
             }
 
             if ((lesX[0] == objectif_x && lesY[0] == objectif_y) || (lesX_2[0] == objectif_x && lesY_2[0] == objectif_y)) { //lorsque l'objectif est atteint
-            for (int k = 0; k<NB_SORTIE; k++){
-                if (!pommeMangee && objectif_x == portail_X[k] && objectif_y == portail_Y[k]) {                              // et que l'objectif n'est pas une pomme
-                    progresser(lesX, lesY, direction, lePlateau, &collision, &pommeMangee);
-                    progresser(lesX, lesY, direction, lePlateau, &collision, &pommeMangee); //on progresse de 2 car le portail est situé au niveau de bordure
-                    nbMove += 2;
-            }
+                for (int k = 0; k<NB_SORTIE; k++){
+                    if (!pommeMangee && objectif_x == portail_X[k] && objectif_y == portail_Y[k]) {                              // et que l'objectif n'est pas une pomme
+                        progresser(lesX, lesY, direction, lePlateau, &collision, &pommeMangee);
+                        progresser(lesX, lesY, direction, lePlateau, &collision, &pommeMangee); //on progresse de 2 car le portail est situé au niveau de bordure
+                        nbMove += 2;
+                    }
                 }
                 trajOpti(lesX, lesY, nbPommes, direction, &objectif_x, &objectif_y) ; //calcul les coordonnées du nouvel objectif
             }
@@ -264,8 +266,8 @@ int main(){
             nbMove2++; //compteur de mouvements
 
             if (pommeMangee){
+                nb_pomme2++;
                 nbPommes++; //augmente le nombre de pommes mangées
-                nb_pomme2++;//augmente le compteur de pommes du serpent 2
                 gagne = (nbPommes==NB_POMMES);
                 if (!gagne){
                     ajouterPomme(lePlateau, nbPommes); //ajoute une pomme sur le plateau suite à la pomme mangée
@@ -273,12 +275,12 @@ int main(){
             }
 
             if ((lesX_2[0] == objectif_x2 && lesY_2[0] == objectif_y2) || (lesX[0] == objectif_x2 && lesY[0] == objectif_y2)) { //lorsque l'objectif est atteint
-            for (int k = 0; k<NB_SORTIE; k++){
-                if (!pommeMangee && objectif_x2 == portail_X[k] && objectif_y2 == portail_Y[k]) {                                     // et que l'objectif n'est pas une pomme
-                    progresser2(lesX_2, lesY_2, direction2, lePlateau, &collision, &pommeMangee);
-                    progresser2(lesX_2, lesY_2, direction2, lePlateau, &collision, &pommeMangee); //on progresse de 2 car le portail est situé au niveau de bordure
-                    nbMove += 2;
-            }
+                for (int k = 0; k<NB_SORTIE; k++){
+                    if (!pommeMangee && objectif_x2 == portail_X[k] && objectif_y2 == portail_Y[k]) {                                     // et que l'objectif n'est pas une pomme
+                        progresser2(lesX_2, lesY_2, direction2, lePlateau, &collision, &pommeMangee);
+                        progresser2(lesX_2, lesY_2, direction2, lePlateau, &collision, &pommeMangee); //on progresse de 2 car le portail est situé au niveau de bordure
+                        nbMove += 2;
+                    }
                 }
             trajOpti2(lesX_2, lesY_2, nbPommes, direction2, &objectif_x2, &objectif_y2);
             }
@@ -299,9 +301,8 @@ int main(){
     } while (touche!=STOP && !collision && !gagne);
     enable_echo();
     gotoxy(1, HAUTEUR_PLATEAU+1);
-    printf("nombre de déplacements du premier serpent = %d et nombre de pommes mangées : %d\n", nbMove, nb_pomme1);
-    printf("nombre de déplacements du deuxième serpent = %d et nombre de pommes mangées : %d\n", nbMove2, nb_pomme2);
-
+    printf("nombre de déplacements du premier serpent = %d\n, nombre de pommes mangées = %d\n", nbMove, nb_pomme1);
+    printf("nombre de déplacements du deuxième serpent = %d\n,  nombre de pommes mangées = %d\n", nbMove2, nb_pomme2);
     return EXIT_SUCCESS;
 }
 
