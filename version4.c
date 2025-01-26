@@ -119,6 +119,9 @@ int lesPavesY[NB_PAVES] = { 4, 4, 33, 33, 14, 22};
 int portail_X[] = {LARGEUR_PLATEAU/2, LARGEUR_PLATEAU, LARGEUR_PLATEAU/2, 1} ;
 int portail_Y[] = {1, HAUTEUR_PLATEAU/2, HAUTEUR_PLATEAU, HAUTEUR_PLATEAU/2} ;
 
+//nombre de pommes mangées par serpent 
+int nb_pomme1 ;
+int nb_pomme2 ;
 //coordonnées de départ du serpent
 
 
@@ -139,6 +142,9 @@ int main(){
     int objectif_y ;
     //position suivante du serpent 1
     int prochaine_position_x, prochaine_position_y;
+    //nombre initial de pommes mangés par serpent
+    nb_pomme1 = 0 ;
+    nb_pomme2 = 0 ;
 
 
 	/************************************************/
@@ -230,6 +236,7 @@ int main(){
 
             if (pommeMangee){
                 nbPommes++; //augmente le nombre de pommes mangées
+                nb_pomme1++;//augmente le compteur de pommes du serpent 1
                 gagne = (nbPommes==NB_POMMES);
                 if (!gagne){
                     ajouterPomme(lePlateau, nbPommes); //ajoute une pomme sur le plateau suite à la pomme mangée
@@ -258,6 +265,7 @@ int main(){
 
             if (pommeMangee){
                 nbPommes++; //augmente le nombre de pommes mangées
+                nb_pomme2++;//augmente le compteur de pommes du serpent 2
                 gagne = (nbPommes==NB_POMMES);
                 if (!gagne){
                     ajouterPomme(lePlateau, nbPommes); //ajoute une pomme sur le plateau suite à la pomme mangée
@@ -291,8 +299,9 @@ int main(){
     } while (touche!=STOP && !collision && !gagne);
     enable_echo();
     gotoxy(1, HAUTEUR_PLATEAU+1);
-    printf("nombre de déplacements du premier serpent = %d\n", nbMove);
-    printf("nombre de déplacements du deuxième serpent = %d\n", nbMove2);
+    printf("nombre de déplacements du premier serpent = %d et nombre de pommes mangées : %d\n", nbMove, nb_pomme1);
+    printf("nombre de déplacements du deuxième serpent = %d et nombre de pommes mangées : %d\n", nbMove2, nb_pomme2);
+
     return EXIT_SUCCESS;
 }
 
